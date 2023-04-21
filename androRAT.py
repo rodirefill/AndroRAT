@@ -11,7 +11,7 @@ except ImportError as e:
     print(stdOutput("error")+"\033[1mpyngrok not found");
     print(stdOutput("info")+"\033[1mRun pip3 install -r requirements.txt")
     exit()
-    
+
 clearDirec()
 
 #                     _           _____         _______
@@ -44,21 +44,20 @@ if args.build:
     icon=True if args.icon else None
     if args.ngrok:
         conf.get_default().monitor_thread = False
-        port = 8000 if not port_ else port_
+        port = port_ if port_ else 8000
         tcp_tunnel = ngrok.connect(port, "tcp")
         ngrok_process = ngrok.get_ngrok_process()
         domain,port = tcp_tunnel.public_url[6:].split(":")
         ip = socket.gethostbyname(domain)
         print(stdOutput("info")+"\033[1mTunnel_IP: %s PORT: %s"%(ip,port))
         build(ip,port,args.output,True,port_,icon)
+    elif args.ip and args.port:
+        build(args.ip,port_,args.output,False,None,icon)
     else:
-        if args.ip and args.port:
-            build(args.ip,port_,args.output,False,None,icon)
-        else:
-            print(stdOutput("error")+"\033[1mArguments Missing")
+        print(stdOutput("error")+"\033[1mArguments Missing")
 
 if args.shell:
     if args.ip and args.port:
-        get_shell(args.ip,args.port) 
+        get_shell(args.ip,args.port)
     else:
         print(stdOutput("error")+"\033[1mArguments Missing")

